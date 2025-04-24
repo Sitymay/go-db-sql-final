@@ -80,7 +80,7 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 		sql.Named("number", number))
 
 	if err != nil {
-		return fmt.Errorf("ошибка: %v", err)
+		return fmt.Errorf("ошибка: %w", err)
 	}
 	return nil
 }
@@ -88,25 +88,14 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 func (s ParcelStore) SetAddress(number int, address string) error {
 	// реализуйте обновление адреса в таблице parcel
 	// менять адрес можно только если значение статуса registered
-	var regStatus string
 
-	row := s.db.QueryRow("SELECT status FROM parcel WHERE number = :number", sql.Named("number", number))
-	err := row.Scan(&regStatus)
-	if err != nil {
-		return fmt.Errorf("ошибка : 'статус не найден %v'", err)
-	}
-
-	if regStatus != ParcelStatusRegistered {
-		return fmt.Errorf("ошибка : 'некорректный статус' %v", regStatus)
-	}
-
-	_, err = s.db.Exec(
-		"UPDATE parcel SET address = :address WHERE number = :number",
+	_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number AND status = :status",
 		sql.Named("address", address),
 		sql.Named("number", number),
+		sql.Named("status", ParcelStatusRegistered),
 	)
 	if err != nil {
-		return fmt.Errorf("ошибка при обновлении адреса: %v", err)
+		return fmt.Errorf("произошла ошибка: %w", err)
 	}
 
 	return nil
@@ -115,24 +104,13 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 func (s ParcelStore) Delete(number int) error {
 	// реализуйте удаление строки из таблицы parcel
 	// удалять строку можно только если значение статуса registered
-	var regStatus string
-
-	row := s.db.QueryRow("SELECT status FROM parcel WHERE number = :number", sql.Named("number", number))
-	err := row.Scan(&regStatus)
-	if err != nil {
-		return fmt.Errorf("ошибка : 'статус не найден %v'", err)
-	}
-
-	if regStatus != ParcelStatusRegistered {
-		return fmt.Errorf("ошибка : 'некорректный статус %v'", regStatus)
-	}
-
-	_, err = s.db.Exec(
-		"DELETE FROM parcel WHERE number = :number",
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number AND status = :status",
 		sql.Named("number", number),
+		sql.Named("status", ParcelStatusRegistered),
 	)
 	if err != nil {
-		return fmt.Errorf("произошла ошибка при удалении: %v", err)
+		return fmt.Errorf("произошла ошибка: %w", err)
 	}
+
 	return nil
 }

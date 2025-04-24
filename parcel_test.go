@@ -50,10 +50,10 @@ func TestAddGetDelete(t *testing.T) {
 	// напиши тест здесь
 	got, err := store.Get(id)
 	require.NoError(t, err)
-	assert.Equal(t, parcel.Client, got.Client)
-	assert.Equal(t, parcel.Status, got.Status)
-	assert.Equal(t, parcel.Address, got.Address)
-	assert.Equal(t, parcel.CreatedAt, got.CreatedAt)
+
+	parcel.Number = id
+	parcel.CreatedAt = got.CreatedAt
+	assert.Equal(t, parcel, got)
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
@@ -62,7 +62,7 @@ func TestAddGetDelete(t *testing.T) {
 
 	_, err = store.Get(id)
 	require.Error(t, err)
-	require.Equal(t, sql.ErrNoRows, err)
+	require.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 // TestSetAddress проверяет обновление адреса
@@ -157,9 +157,7 @@ func TestGetByClient(t *testing.T) {
 	for _, parcel := range storedParcels {
 		expectedParcel, exists := parcelMap[parcel.Number] // в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
 		require.True(t, exists)                            // убедитесь, что все посылки из storedParcels есть в parcelMap
-		assert.Equal(t, expectedParcel.Client, parcel.Client)
-		assert.Equal(t, expectedParcel.Status, parcel.Status)
-		assert.Equal(t, expectedParcel.Address, parcel.Address)
-		assert.Equal(t, expectedParcel.CreatedAt, parcel.CreatedAt) // убедитесь, что значения полей полученных посылок заполнены верно
+		expectedParcel.CreatedAt = parcel.CreatedAt        // либо сравниваем все поля кромя CreatedAt, либо подставляем время перед сравнением
+		assert.Equal(t, expectedParcel, parcel)            // убедитесь, что значения полей полученных посылок заполнены верно
 	}
 }
